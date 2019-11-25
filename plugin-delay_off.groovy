@@ -119,14 +119,14 @@ def turnOffEvent(values) {
     state.extTimeOffS += delta * settings.timeOnScaling
     if (state.extTimeOffS > settings.timeMaxOffS) state.extTimeOffS = settings.timeMaxOffS
 
-    values.timeOffS = (long) state.extTimeOffS
+    values.timeOffS = (long) state.extTimeOffS*1000
 
     def date = new Date()
     long resetTime = now() + ((state.extTimeOffS + settings.timeResetIdleS)*1000)
     date.setTime(resetTime)
     schedule(date, "extOffReset")
 
-    if (logEnable) log.debug "extTimeOffCalc(): new extTimeOff: ${state.extTimeOffS} delta: ${delta}"
+    if (logEnable) log.debug "extTimeOffCalc(): new extTimeOff: ${state.extTimeOffS} delta: ${delta} values: ${values}"
 
     return false
 
@@ -139,3 +139,4 @@ def extOffReset() {
 def parentTimeOffS() {
     return parent.settings?.timeOffS ?: 0
 }
+
