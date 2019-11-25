@@ -4,8 +4,8 @@ definition(
     author: "asj",
     parent: "asj:Plugable Lights Motion triggered",
     description: "Longer period of motion increases the stay on time after motion ends",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png") {
+    iconUrl: "",
+    iconX2Url: "") {
 
     preferences {
         page(name: "mainPage", title: "Settings Page", install: true, uninstall: true) {
@@ -76,7 +76,7 @@ def sendFuncsToParent() {
 def getPluginFunctions() {
     def callbacks = [
         label: app.label,
-        functions: [ "postTurnOn", "turnOffEvent" ]
+        functions: [ "postTurnOn", "postTurnOffEvent", "postTurnOff" ]
     ]
     return callbacks
 }
@@ -98,11 +98,10 @@ def postTurnOn(values) {
     return false
 }
 
-def turnOffEvent(values) {
-    if (logEnable) log.debug "extTimeOffCalc(): extTimeOff: ${state.extTimeOffS} initial: ${values.timeOffS}"
+def postTurnOffEvent(values) {
+    if (logEnable) log.debug "postTurnOffEvent(): extTimeOff: ${state.extTimeOffS} initial: ${values.timeOffS}"
     if (!state?.turnOnAt) return false
-
-    state.turnOffAt = now()
+    if (!state?.turnOffAt) return false
 
     values.timeOffS += (state.extTimeOffS ?: 0)*1000
     state.extTimeOffS = 0
@@ -112,6 +111,16 @@ def turnOffEvent(values) {
     return false
 
 }
+
+def postTurnOff(values) {
+    if (logEnable) log.debug "postTurnOff(): extTimeOff: ${state.extTimeOffS} initial: ${values.timeOffS}"
+    if (!state?.turnOnAt) return false
+
+    state.turnOffAt = now()
+
+    return false
+}
+
 
 def extOffReset() {
     state.extTimeOffS = parentTimeOffS()
