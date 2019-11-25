@@ -183,7 +183,7 @@ def turnOnEvent(evt) {
 
     pluginExec("postTurnOn", values)
     def delta = now() - start
-    log.debug "turnOnEvent(): time: $delta"
+    if (logEnable) log.debug "turnOnEvent(): time: $delta"
 }
 
 def turnOffEvent(evt) {
@@ -295,3 +295,4 @@ def pluginExec(func, arg) {
 def getSettings() {
     return settings
 }
+
