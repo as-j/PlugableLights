@@ -4,8 +4,8 @@ definition(
     author: "asj",
     parent: "asj:Plugable Lights Motion triggered",
     description: "Ability to stop devices from turning on due to a switch being on",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png") {
+    iconUrl: "",
+    iconX2Url: "") {
 
     preferences {
         page(name: "mainPage", title: "Settings Page", install: true, uninstall: true) {
@@ -17,8 +17,8 @@ definition(
                 parent_settings?.switch_default?.each { device ->
                     paragraph "Device: $device"
                 }
-                input name: "turnOnWithSwitch", type: "capability.switch", title: "Turn off lights when block enabled", multiple: false, required: true
-                input name: "turnOffWhenSwitchOff", type: "bool", title: "Turn Off Device When Switch Turned Off", defaultValue: true
+                input name: "turnOnWithSwitch", type: "capability.switch", title: "Turn on lights when switch on", multiple: false, required: true
+                input name: "turnOffWhenSwitchOff", type: "bool", title: "Turn Off Device(s) When Switch Turned Off", defaultValue: true
                 input name: "restoreTimeS", type: "number", title: "After Switch Off Time Re-enable motion", defaultValue: 15
             }
             section("Debug Settings") {
@@ -101,7 +101,7 @@ def switchOnEvent(evt) {
     parent.unsubscribe("turnOnEvent")
     parent.unsubscribe("turnOffEvent")
     parent.unschedule("turnOff")
-    parent.turnOn([displayName: "turnOnEvent",
+    parent.turnOnEvent([displayName: "turnOnEvent",
                    name: "turnOnEvent",
                    value: "on"])
 }
@@ -117,3 +117,4 @@ def switchOffEvent(evt) {
 def restureMotion() {
     parent.updated()
 }
+
