@@ -122,6 +122,7 @@ def blockOffEvent(evt) {
         parent_settings?.turnOnContactSensor?.each { device ->
             if (device.currentValue('contact') == 'open') active = true
         }
-        parent.turnOnEvent displayName: "blockerOffEvent", name: "blockerOffEvent", value: "on"
+        if (active) parent.turnOnEvent displayName: "blockerOffEvent", name: "blockerOffEvent", value: "on"
     }
 }
+
