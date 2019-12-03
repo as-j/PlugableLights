@@ -46,38 +46,39 @@ definition(
     namespace: "asj",
     author: "asj",
     description: "Motion or Contact triggered light with plugable child apps",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png") {
+    iconUrl: "",
+    iconX2Url: "") {
 
     preferences {
         page(name: "mainPage", title: "Settings Page", install: true, uninstall: true) {
             section("App Name") {
-                label title: "App Name", defaultValue: app.label, required: true
+                label title: "App Name", defaultValue: app.label, required: true, submitOnChange: true
             }
             section("Turn On Trigger") {
-                input "turnOnMotionSensor", "capability.motionSensor", title: "Motion Sensor Becomes Active", multiple: true, required: false
-                input "turnOnContactSensor", "capability.contactSensor", title: "Contacts Open", multiple: true, required: false
+                input "turnOnMotionSensor", "capability.motionSensor", title: "Motion Sensor Becomes Active", multiple: true, required: false, submitOnChange: true
+                input "turnOnContactSensor", "capability.contactSensor", title: "Contacts Open", multiple: true, required: false, submitOnChange: true
             }
             section("Turn Off Triggers") {
-                input "timeOffS", "number", title: "Turn off after motion ends or contact closes (s)", defaultValue: 120
-                input "turnOffMotionSensor", "capability.motionSensor", title: "Motion Sensor Becomes Inactive", multiple: true
-                input "turnOffContactSensor", "capability.contactSensor", title: "Contacts Close", multiple: true
+                input "timeOffS", "number", title: "Turn off after motion ends or contact closes (s)", defaultValue: 120, submitOnChange: true
+                input "turnOffMotionSensor", "capability.motionSensor", title: "Motion Sensor Becomes Inactive", multiple: true, submitOnChange: true
+                input "turnOffContactSensor", "capability.contactSensor", title: "Contacts Close", multiple: true, submitOnChange: true
             }
             section("Defaults for all modes") {
-                input "level_default", "number", title: "Default Level", require: false
-                input "temp_default", "number", title: "Default Temp", require: false
-                input "switch_default", "capability.switch", title: "Devices To Turn On", multiple: true, required: false
-                input "switch_off_default", "capability.switch", title: "Devices To Turn Off", multiple: true, required: false
+                input "level_default", "number", title: "Default Level", require: false, submitOnChange: true
+                input "temp_default", "number", title: "Default Temp", require: false, submitOnChange: true
+                input "switch_default", "capability.switch", title: "Devices To Turn On", multiple: true, required: false, submitOnChange: true
+                input "switch_off_default", "capability.switch", title: "Devices To Turn Off", multiple: true, required: false, submitOnChange: true
+                input "onViaSetLevel", "bool", title: "Turn on with setLevel Only (zooz)", defaultValue: false, submitOnChange: true
             }
             section("Plugins") {
                 plugIns.each { 
-                    app name: it.name, appName: it.appName, namespace: it?.namespace ?: "asj", title: it.title
+                    app name: it.name, appName: it.appName, namespace: it?.namespace ?: "asj", title: it.title, submitOnChange: true
                 }
             }
             section("Debug Settings") {
                 //standard logging options
-                input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
-                input name: "txtEnable", type: "bool", title: "Enable descriptionText logging", defaultValue: false
+                input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false, submitOnChange: true
+                input name: "txtEnable", type: "bool", title: "Enable info logging", defaultValue: false, submitOnChange: true
             }
         }
     }
