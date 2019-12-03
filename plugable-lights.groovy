@@ -31,6 +31,11 @@ import groovy.transform.Field
         name: "plugInForceOn",
         title: "Force Lights On and Disable Motion Detection with Switch",
     ],
+    [
+        appName: "Plugable Lights: Do not adjust Plugin",
+        name: "plugInDoNotAdjust",
+        title: "Don't change light levels/settings once on",
+    ],
 ]
 
 // getChildApps seemms to be slow, ~40ms so cache child app
