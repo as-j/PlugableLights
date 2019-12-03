@@ -98,9 +98,8 @@ def parentUpdated(values) {
 def switchOnEvent(evt) {
     if (logEnable) log.debug "switchOnEvent(): $evt.displayName($evt.name) $evt.value"
 
-    parent.unsubscribe("turnOnEvent")
-    parent.unsubscribe("turnOffEvent")
-    parent.unschedule("turnOff")
+    parent.clearSubscriptions()
+    parent.clearScheduledEvents()
     parent.turnOnEvent([displayName: "turnOnEvent",
                    name: "turnOnEvent",
                    value: "on"])
@@ -111,10 +110,10 @@ def switchOffEvent(evt) {
     if (settings.turnOffWhenSwitchOff) {
         parent.turnOff()
     }
-    runIn(settings.restoreTimeS ?: 0, restureMotion)
+    runIn(settings.restoreTimeS ?: 0, restoreMotion)
 }
 
-def restureMotion() {
-    parent.updated()
+def restoreMotion() {
+    parent.setupSubscriptions()
 }
 

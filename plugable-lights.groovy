@@ -118,8 +118,24 @@ def uninstalled() {
  *  Refreshes scheduling and subscriptions.
  **/
 def updated() {
-    if (logEnable) log.debug "${app.label}: updated ${settings}"
+    if (textEnable) log.info "${app.label}: updated ${settings}"
 
+    setupSubscriptions()
+ 
+    pluginExec("parentUpdated", settings)
+}
+
+def clearScheduledEvents() {
+    unschedule("turnOff")
+}
+
+def clearSubscriptions() {
+    if (txtEnable) log.info "${app.label}: clearSubscriptions"
+    unsubscribe()
+}
+
+def setupSubscriptions() {
+    if (txtEnable) log.info "${app.label}: setupSubscriptions"
     unsubscribe()
 
     // Turn on devices
@@ -138,10 +154,8 @@ def updated() {
         subscribe(device, "contact.closed", turnOffEvent)
     }
     settings.switch_default.each { device ->
-        if (logEnable) log.debug "turnOnEvent(): ${device.currentValue("level")}"
+        if (logEnable) log.debug "updated(): ${device.currentValue("level")}"
     }
-
-    pluginExec("parentUpdated", settings)
 }
 
 def turnOnEvent(evt) {
@@ -153,11 +167,12 @@ def turnOnEvent(evt) {
         mode_temp: settings.temp_default,
     ]
 
-    if (logEnable) log.debug "turnOnEvent(): $evt.displayName($evt.name) $evt.value values: $values"
+    if (txtEnable) log.info "turnOnEvent(): $evt.displayName($evt.name) $evt.value values: $values"
 
     def skip = pluginExec("preTurnOn", values)
 
     if (logEnable) log.debug "turnOnEvent(): skip: $skip new values: $values $skip"
+    if (txtEnable && skip) log.info "turnOnEvent(): skipping due to plugin. skip: $skip"
     if (skip) return
 
     values.devices.each { device ->
@@ -167,13 +182,18 @@ def turnOnEvent(evt) {
         if (skip) return
 
         if (values.mode_level && device.hasCommand("setLevel")) {
-            if (logEnable) log.debug "turnOnEvent(): has setLevel ${device.currentValue('level')}"
-            if (device.currentValue('level') != values.mode_level) device.setLevel(values.mode_level)
+            if (logEnable) log.debug "turnOnEvent(): has setLevel ${device.currentValue('level')} want: ${values.mode_level}"
+            if (txtEnable && (device.currentLevel != values.mode_level)) log.info "turnOnEvent(): has setLevel ${device.currentLevel} want: ${values.mode_level}"
+            if (settings.onViaSetLevel || (device.currentValue('level') != values.mode_level)) {
+                device.setLevel(values.mode_level)
+            }
         }
         if (values.mode_temp && device.hasCommand("setColorTemperature")) {
-            if (device.currentValue('colorTemperature') != mode_temp) device.setColorTemperature(values.mode_temp)
+            if (txtEnable && (device.currentColorTemperature != values.mode_temp)) log.info "turnOnEvent(): has setTemp ${device.currentColorTemperature} want: ${values.mode_temp}"
+            if (device.currentValue('colorTemperature') != values.mode_temp) device.setColorTemperature(values.mode_temp)
         }
-        if (device.currentValue('switch') != "on") device.on()
+        if (txtEnable && (device.currentValue('switch') != "on")) log.info "turnOnEvent(): switch ${device.currentSwitch} -> on"
+        if (!settings.onViaSetLevel && (device.currentValue('switch') != "on")) device.on()
     }
 
     values.devices_off.each { device ->
@@ -193,7 +213,7 @@ def turnOnEvent(evt) {
 }
 
 def turnOffEvent(evt) {
-    if (logEnable) log.debug "turnOffEvent(): $evt.displayName($evt.name) $evt.value"
+    if (txtEnable) log.info "turnOffEvent(): $evt.displayName($evt.name) $evt.value"
 
     def num_active = 0
     settings.turnOffMotionSensor.each { device ->
@@ -209,6 +229,7 @@ def turnOffEvent(evt) {
         timeOffS: settings.timeOffS*1000,
     ]
     def skip = pluginExec("turnOffEvent", values)
+    if (skip && txtEnable) log.info "turnOffEvent(): skipping due to plugin"
     if (skip) return
 
     if (values.timeOffS) {
@@ -229,7 +250,7 @@ def turnOffEvent(evt) {
 }
 
 def turnOff() {
-    if (logEnable) log.debug "turnOff() ${settings.switch_default}"
+    if (txtEnable) log.info "turnOff() ${settings.switch_default}"
 
     def values = [
         devices: settings.switch_default,
@@ -237,6 +258,7 @@ def turnOff() {
 
     def skip = pluginExec("preTurnOff", values)
     if (logEnable) log.debug "turnOff() skip: $skip new values ${values}"
+    if (txtEnable && skip) log.info "turnOff(): skipping due to plugin"
     if (skip) return
 
 
@@ -281,7 +303,7 @@ def refreshCallbacks() {
 def pluginExec(func, arg) {
     if (logEnable) log.debug "${app.label}: pluginExec: num plugins: ${state.callbacks.size()}"
     if (!state.callbacks) {
-        if (logEnable) log.debug "${app.label}: pluginExec: refreshing"
+        //if (logEnable) log.debug "${app.label}: pluginExec: refreshing"
         refreshCallbacks()
         if (logEnable) log.debug "${app.label}: pluginExec: refreshed to: ${state.callbacks.size()}"
     }
@@ -291,8 +313,12 @@ def pluginExec(func, arg) {
             if (logEnable) log.debug "${app.label}: pluginExec: $app_label ${state.callbacks[app_label].functions} ${childCache[app_label]}"
             def child = childCache[app_label] ?: getChildAppByLabel(app_label)
             childCache[app_label] = child
+            if (txtEnable) log.info "${app.label}: pluginExec: $app_label -> $func"
             def should_skip = child."$func"(arg)
-            if (should_skip) skip = true
+            if (should_skip) {
+                if (txtEnable) log.info "${app.label}: pluginExec: $app_label -> $func returned SKIP"
+                skip = true
+            }
         }
     }
     return skip

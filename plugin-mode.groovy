@@ -71,6 +71,7 @@ def uninstalled() {
  **/
 def updated() {
     sendFuncsToParent()
+    parent.updated()
     if (logEnable) log.debug "${app.label}: refresh done!"
 }
 
