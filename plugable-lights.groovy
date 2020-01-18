@@ -36,6 +36,11 @@ import groovy.transform.Field
         name: "plugInDoNotAdjust",
         title: "Don't change light levels/settings once on",
     ],
+    [
+        appName: "Plugable Lights: Time Plugin",
+        name: "plugInTime",
+        title: "Time Plugin",
+    ],
 ]
 
 // getChildApps seemms to be slow, ~40ms so cache child app
@@ -123,6 +128,7 @@ def updated() {
     setupSubscriptions()
  
     pluginExec("parentUpdated", settings)
+    runIn(1, refreshCallbacks)
 }
 
 def clearScheduledEvents() {
@@ -158,27 +164,11 @@ def setupSubscriptions() {
     }
 }
 
-def turnOnEvent(evt) {
-    def start = now()
-    def values = [
-        devices: settings.switch_default,
-        devices_off: settings.switch_off_default,
-        mode_level: settings.level_default,
-        mode_temp: settings.temp_default,
-    ]
-
-    if (txtEnable) log.info "turnOnEvent(): $evt.displayName($evt.name) $evt.value values: $values"
-
-    def skip = pluginExec("preTurnOn", values)
-
-    if (logEnable) log.debug "turnOnEvent(): skip: $skip new values: $values $skip"
-    if (txtEnable && skip) log.info "turnOnEvent(): skipping due to plugin. skip: $skip"
-    if (skip) return
-
+def turnOnDevices(values) {
     values.devices.each { device ->
         if (logEnable) log.debug "turnOnEvent(): turning on $device"
 
-        skip = pluginExec("turnOn", device)
+        def skip = pluginExec("turnOn", device)
         if (skip) return
 
         if (values.mode_level && device.hasCommand("setLevel")) {
@@ -200,14 +190,36 @@ def turnOnEvent(evt) {
         if (logEnable) log.debug "turnOnEvent(): turning off $device"
         if (device.currentValue('switch') != "off") device.off()
     }
+}
 
-    def text ="${app.label} turn on event"
-    if (txtEnable) log.info text
-    sendEvent(name: "switch", value: "on", descriptionText: text)
+def turnOnEvent(evt) {
+    def start = now()
+    def values = [
+        devices: settings.switch_default,
+        devices_off: settings.switch_off_default,
+        mode_level: settings.level_default,
+        mode_temp: settings.temp_default,
+    ]
 
-    unschedule("turnOff")
+    if (txtEnable) log.info "turnOnEvent(): $evt.displayName($evt.name) $evt.value values: $values"
+
+    def skip = pluginExec("preTurnOn", values)
+
+    if (logEnable) log.debug "turnOnEvent(): skip: $skip new values: $values $skip"
+    if (txtEnable && skip) log.info "turnOnEvent(): skipping due to plugin. skip: $skip"
+ 
+    if (!skip) {
+        turnOnDevices(values)
+
+        def text ="${app.label} turn on event"
+        if (txtEnable) log.info text
+        sendEvent(name: "switch", value: "on", descriptionText: text)
+    }
 
     pluginExec("postTurnOn", values)
+    
+    unschedule("turnOff")
+
     def delta = now() - start
     if (logEnable) log.debug "turnOnEvent(): time: $delta"
 }
@@ -262,12 +274,14 @@ def turnOff() {
     if (skip) return
 
 
+    def num = 0
     values.devices.each { device ->
         if (logEnable) log.debug "turnOff(): turning off $device"
         device.off()
+        num += 1
     }
 
-    def text ="${app.label} turn off event"
+    def text ="${app.label} turn off event (${num})"
     if (txtEnable) log.info text
 
     sendEvent(name: "switch", value: "off", descriptionText: text)
@@ -314,7 +328,7 @@ def pluginExec(func, arg) {
             def child = childCache[app_label] ?: getChildAppByLabel(app_label)
             childCache[app_label] = child
             if (txtEnable) log.info "${app.label}: pluginExec: $app_label -> $func"
-            def should_skip = child."$func"(arg)
+            def should_skip = child?."$func"(arg)
             if (should_skip) {
                 if (txtEnable) log.info "${app.label}: pluginExec: $app_label -> $func returned SKIP"
                 skip = true
