@@ -41,6 +41,11 @@ import groovy.transform.Field
         name: "plugInTime",
         title: "Time Plugin",
     ],
+    [
+        appName: "Plugable Lights: Turn On of Off At A Set Time",
+        name: "plugInTimedOnOff",
+        title: "Turn on/off at a set time",
+    ],
 ]
 
 // getChildApps seemms to be slow, ~40ms so cache child app
